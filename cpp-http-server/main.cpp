@@ -55,5 +55,21 @@ int main() {
 		return 1;
 	}
 
+	//Listening on a socket
+	if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR) {
+		printf("Listen failed with error %ld\n", WSAGetLastError());
+		closesocket(ListenSocket);
+		WSACleanup();
+		return 1;
+	}
+
+	SOCKET ClientSocket; //temporary socket object for accepting connection from client
+	ClientSocket = INVALID_SOCKET;
+	//Accept client socket
+	ClientSocket = accept(ListenSocket, NULL, NULL);
+	if (ClientSocket == INVALID_SOCKET) {
+		printf("accept failed: %d\n", WSAGetLastError());
+	}
+
 	return 0;
 }
