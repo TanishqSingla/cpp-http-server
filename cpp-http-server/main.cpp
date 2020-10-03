@@ -6,9 +6,15 @@
 
 #define DEFAULT_PORT "27015"
 
+#define DEFAULT_BUFFLEN 512
+
 int main() {
 	WSADATA wsaData;
-	int iResult;
+	int iResult, iSendResult;
+
+	char recvbuf[DEFAULT_BUFFLEN];
+	int recvbuflen = DEFAULT_BUFFLEN;
+	
 
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -70,6 +76,32 @@ int main() {
 	if (ClientSocket == INVALID_SOCKET) {
 		printf("accept failed: %d\n", WSAGetLastError());
 	}
+
+	//Recieve until peer shuts down connection
+	do {
+		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
+		if (iResult > 0) {
+			printf("Bytes recieved: %d\n", iResult);
+
+			//echo the buffer back to the sender
+			iSendResult = send(ClientSocket, recvbuf, iResult, 0);
+			if (iSendResult == SOCKET_ERROR) {
+				printf("Send failed: %d\n", WSAGetLastError());
+				closesocket(ClientSocket);
+				WSACleanup();
+				return 1;
+			}
+			printf("Bytes sent: %d\n", iSendResult);
+		}
+		else if (iResult == 0)
+			printf("Connection closing... \n");
+		else {
+			printf("recv failed: %d\n", WSAGetLastError()); 
+			closesocket(ClientSocket);
+			WSACleanup(); 
+		}
+	} while (iResult > 0);
+
 
 	return 0;
 }
